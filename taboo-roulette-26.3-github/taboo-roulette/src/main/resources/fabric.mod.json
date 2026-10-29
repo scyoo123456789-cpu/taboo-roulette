@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "taboo_roulette",
+	"version": "${version}",
+	"name": "Taboo Roulette (금기 룰렛)",
+	"description": "5분마다 룰렛이 돌아가 금기 행동이 하나씩 영구 봉인되는 챌린지 모드. 싱글플레이 전용.",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.taboochallenge.TabooMod"
+		],
+		"client": [
+			"com.taboochallenge.client.TabooClient"
+		]
+	},
+	"mixins": [
+		"taboo_roulette.mixins.json",
+		{
+			"config": "taboo_roulette.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
