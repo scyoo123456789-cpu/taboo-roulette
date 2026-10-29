@@ -21,8 +21,31 @@ jobs:
 
       - name: Build
         run: |
-          if [ -f taboo-roulette/build.gradle ]; then cd taboo-roulette; fi
+          SETTINGS=$(find . -name settings.gradle -not -path './.git/*' | head -n 1)
+          if [ -z "$SETTINGS" ]; then echo "::error::settings.gradle 이 없습니다"; exit 1; fi
+          cd "$(dirname "$SETTINGS")"
+
+          # 폴더 구조 없이 올라온 파일들을 제자리로 옮기기
+          for f in $(find . -maxdepth 1 -name '*.java'); do
+            pkg=$(grep -m1 '^package ' "$f" | sed -e 's/^package //' -e 's/;.*//' | tr -d '\r')
+            part=main
+            case "$pkg" in com.taboochallenge.client*) part=client ;; esac
+            dir="src/$part/java/$(echo "$pkg" | tr . /)"
+            mkdir -p "$dir"
+            mv "$f" "$dir/"
+          done
+          for f in fabric.mod.json taboo_roulette.mixins.json; do
+            if [ -f "$f" ]; then mkdir -p src/main/resources; mv "$f" src/main/resources/; fi
+          done
+          if [ -f taboo_roulette.client.mixins.json ]; then mkdir -p src/client/resources; mv taboo_roulette.client.mixins.json src/client/resources/; fi
+          find src -type f | sort
+
           gradle build --no-daemon --stacktrace
+
+          # 빈 jar 방지: 모드 정보가 들어있는지 확인
+          if ! unzip -l build/libs/taboo-roulette-*.jar | grep -q fabric.mod.json; then
+            echo "::error::jar 안에 모드 정보(fabric.mod.json)가 없습니다"; exit 1
+          fi
           mkdir -p "$GITHUB_WORKSPACE/out"
           cp build/libs/taboo-roulette-*.jar "$GITHUB_WORKSPACE/out/"
 
@@ -31,4 +54,3 @@ jobs:
           name: taboo-roulette-jar
           path: out/*.jar
           if-no-files-found: error
-      
